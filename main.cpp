@@ -47,6 +47,7 @@
  */
 
 #include "mbed.h"
+#include "m3pi.h"
 #include "easy-connect.h"
 #include "MQTTmbed.h"
 #include "MQTTNetwork.h"
@@ -54,6 +55,11 @@
 #include "MailMsg.h"
 #include "LEDThread.h"
 #include "PrintThread.h"
+#include <iostream>
+#include <time.h>
+
+using namespace std;
+
 
 extern "C" void mbed_reset();
 
@@ -68,7 +74,13 @@ extern "C" void mbed_reset();
 #define EASY_CONNECT_LOGGING    true
 
 DigitalOut wifiHwResetPin(WIFI_HW_RESET_PIN);
-InterruptIn pushbutton(p8);
+
+/** Initialize the m3pi for robot movements. There is an atmega328p MCU in the
+ *  3pi robot base. It's UART lines are connected to the LPC1768's p9 and p10.
+ *  If you send the right sequence of UART characters to the atmega328p, it will
+ *  move the robot for you. We provide a movement() function below for you to use
+ */
+m3pi m3pi(p23, p9, p10);
 
 /* MQTTClient and TCPSocket (underneath MQTTNetwork) may not be thread safe. 
  * Lock this global mutex before any calls to publish(). 
@@ -77,20 +89,92 @@ Mutex mqttMtx;
 
 static char *topic = "m3pi-mqtt-ee250";
 
-void pushbuttonCallback() {
-    printf("button pushed\n");
-    MailMsg *msg;
+/**
+ * @brief      controls movement of the 3pi
+ *
+ *  If you want to use this function in a file outside of main.cpp, the easiest
+ *  way to get access to it is to add
+ *      
+ *      extern movement(char command, char speed, int delta_t)
+ *
+ * in the .cpp file in which you want to use it.
+ *
+ * @param[in]  command  The movement command
+ * @param[in]  speed    The speed of the movement (start by trying 25)
+ * @param[in]  delta_t  The time for each movement in msec (start by trying 100)
+ *
+ * @return     { void }
+ */
 
-    /* send to LED thread which takes care of publishing blink fast commands */
-    msg = getLEDThreadMailbox()->alloc();
-    if (!msg) {
-        printf("LEDThreadMailbox full!\n");
-        return;
+
+
+
+
+
+
+
+
+//int PulseSensorPurplePin = 0;        // Pulse Sensor PURPLE WIRE connected to ANALOG PIN 0
+
+
+//int Signal;                // holds the incoming raw data. Signal value can range from 0-1024
+int Threshold = 550;            // Determine which Signal to "count as a beat", and which to ingore.
+AnalogIn ain(p21);
+
+
+
+
+
+
+
+
+void sleep(unsigned int mseconds)
+{
+	clock_t goal = mseconds + clock();
+	while (goal > clock());
+}
+
+// The SetUp Function:
+//void setup() {
+  //pinMode(LED13,OUTPUT);         // pin that will blink to your heartbeat!
+   //Serial.begin(9600);         // Set's up Serial Communication at certain speed.
+
+//}
+
+
+
+
+
+
+
+
+
+void movement(char command, char speed, int delta_t)
+{
+    if (command == 's')
+    {
+        m3pi.forward(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }    
+    else if (command == 'a')
+    {
+        m3pi.left(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }   
+    else if (command == 'w')
+    {
+        m3pi.backward(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
     }
-    msg->content[0] = FWD_TO_LED_THR;
-    msg->content[1] = LED_PUBLISH_BLINK_FAST;
-    msg->length = 2;
-    getLEDThreadMailbox()->put(msg);
+    else if (command == 'd')
+    {
+        m3pi.right(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }
 }
 
 /* Callback for any received MQTT messages */
@@ -99,22 +183,31 @@ void messageArrived(MQTT::MessageData& md)
     MQTT::Message &message = md.message;
     MailMsg *msg;
 
-    /* our messaging standard says the first byte denotes which thread to fwd to */
+    /* our messaging standard says the first byte denotes which thread to 
+       forward the packet payload to */
     char fwdTarget = ((char *)message.payload)[0];
 
-    /* Ship (or "dispatch") entire message via mail to threads since the 
-       reference to messages will disappear soon after this callback returns */
+    /* Ship (or "dispatch") the entire message via Mail to threads since the 
+       reference to messages will be destroyed by the MQTT thread when this 
+       callback returns */
     switch(fwdTarget)
     {
         case FWD_TO_PRINT_THR:
             printf("fwding to print thread\n");
+
+            /* allocate the memory for a piece of mail */
             msg = getPrintThreadMailbox()->alloc();
+
             if (!msg) {
                 printf("print thread mailbox full!\n");
                 break;
             }
+
+            /* copy the message into the newly allocated MailMsg struct */
             memcpy(msg->content, message.payload, message.payloadlen);
             msg->length = message.payloadlen;
+
+            /* put the piece of mail into the target thread's mailbox */
             getPrintThreadMailbox()->put(msg);
             break;
         case FWD_TO_LED_THR:
@@ -137,9 +230,52 @@ void messageArrived(MQTT::MessageData& md)
 
 int main()
 {
-    /* attach callback to pushbutton interrupt */
-    pushbutton.mode(PullUp);
-    pushbutton.rise(&pushbuttonCallback);
+    /* Uncomment this to see how the m3pi moves. This sequence of functions
+       represent w-a-s-d like controlling. Each button press moves the robot
+       at a speed of 25 (speed can be between -127 to 127) for 100 ms. Use
+       functions like this in your program to move your m3pi when you get 
+       MQTT messages! */
+
+	//Signal = analogRead(PulseSensorPurplePin);  // Read the PulseSensor's value.
+                                              // Assign this value to the "Signal" variable.
+
+   printf("hi\n");
+   //printf(ain;                   // Send the Signal value to Serial Plotter.
+
+
+   if( 2 > Threshold){                          // If the signal is above "550", then "turn-on" Arduino's on-Board LED.
+     //digitalWrite(LED13,HIGH);
+   	 printf("high\n");
+   } else {
+     //digitalWrite(LED13,LOW);                //  Else, the sigal must be below "550", so "turn-off" this LED.
+   	 printf("low\n");
+   }
+
+
+	sleep(10); //1000 for 1 sec
+
+
+
+
+
+
+
+
+
+
+
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
+    movement('w', 25, 100);
 
     wait(1); //delay startup 
     printf("Resetting ESP8266 Hardware...\n");
@@ -184,22 +320,33 @@ int main()
 
 
     /* define MQTTCLIENT_QOS2 as 1 to enable QOS2 (see MQTTClient.h) */
-    /* Setup the callback to handle messages that arrive */
+    /* This call attaches the messageArrived callback to handle MQTT messages 
+       that arrive */
     if ((retval = client.subscribe(topic, MQTT::QOS0, messageArrived)) != 0)
         printf("MQTT subscribe returned %d\n", retval);
 
-    /* launch threads */
+    /* This is a good point to launch your threads. If you want to create 
+       another thread, you can look at the structure of the two threads we 
+       provided and make a copy of it. Otherewise, you can gut out the two 
+       threads and insert your application code. Read the LEDThread and 
+       PrintThread files to understand how these threads work.*/
     Thread ledThr;
     Thread printThr;
 
-    /* pass in pointer to client so led thread can client.publish() messages */
+    /* Here, we pass in a pointer to the MQTT client so the LED thread can 
+       client.publish() messages */
     ledThr.start(callback(LEDThread, (void *)&client));
+
+    /* Here, we do not pass the pointer in. This means the printing thread 
+       won't be able to publish any MQTT messages. Modify this accordingly if
+       you need to publish. */
     printThr.start(printThread);
 
     /* The main thread will now run in the background to keep the MQTT/TCP 
      connection alive. MQTTClient is not an asynchronous library. Paho does
      have MQTTAsync, but some effort is needed to adapt mbed OS libraries to
-     be used by the MQTTAsync library. */
+     be used by the MQTTAsync library. Please do NOT do anything else in this
+     thread. Let it serve as your background MQTT thread. */
     while(1) {
         Thread::wait(1000);
         printf("main: yielding...\n", client.isConnected());
@@ -207,7 +354,7 @@ int main()
         if(!client.isConnected())
             mbed_reset(); //connection lost! software reset
 
-        /* yield() needs to be called at least once per keepAliveInterval */
+        /* yield() needs to be called at least once per keepAliveInterval. */
         client.yield(1000);
     }
 
