@@ -49,7 +49,7 @@
 #include "rtos.h"
 #include "MailMsg.h"
 
-#define PRINTTHREAD_MAILBOX_SIZE  32
+#define PRINTTHREAD_MAILBOX_SIZE  8
 
 /**
  * @brief      Main LED thread function

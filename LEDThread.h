@@ -49,7 +49,7 @@
 #include "rtos.h"
 #include "MailMsg.h"
 
-#define LEDTHREAD_MAILBOX_SIZE  32
+#define LEDTHREAD_MAILBOX_SIZE  8
 
 /**
  * @brief      Main LED thread function.

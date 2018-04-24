@@ -57,7 +57,8 @@
 #include "PrintThread.h"
 #include <iostream>
 #include <time.h>
-
+#include <string>
+#include <math.h>
 using namespace std;
 
 
@@ -108,18 +109,14 @@ static char *topic = "m3pi-mqtt-ee250";
 
 
 
-
-
-
-
-
-
 //int PulseSensorPurplePin = 0;        // Pulse Sensor PURPLE WIRE connected to ANALOG PIN 0
 
 
 //int Signal;                // holds the incoming raw data. Signal value can range from 0-1024
 int Threshold = 550;            // Determine which Signal to "count as a beat", and which to ingore.
-AnalogIn ain(p21);
+AnalogIn ain(p20);
+
+
 
 
 
@@ -211,10 +208,10 @@ void messageArrived(MQTT::MessageData& md)
             getPrintThreadMailbox()->put(msg);
             break;
         case FWD_TO_LED_THR:
-            printf("fwding to led thread\n");
+            printf("fwding to heart thread\n");
             msg = getLEDThreadMailbox()->alloc();
             if (!msg) {
-                printf("led thread mailbox full!\n");
+                printf("heart thread mailbox full!\n");
                 break;
             }
             memcpy(msg->content, message.payload, message.payloadlen);
@@ -240,22 +237,28 @@ int main()
                                               // Assign this value to the "Signal" variable.
 
    printf("hi\n");
-   //printf(ain;                   // Send the Signal value to Serial Plotter.
+                   // Send the Signal value to Serial Plotter.
 
 
-   if( 2 > Threshold){                          // If the signal is above "550", then "turn-on" Arduino's on-Board LED.
-     //digitalWrite(LED13,HIGH);
-   	 printf("high\n");
-   } else {
-     //digitalWrite(LED13,LOW);                //  Else, the sigal must be below "550", so "turn-off" this LED.
-   	 printf("low\n");
+/*
+   while (1)
+   {
+        printf("ratebeat:  %f\n", ain.read()*100); 
+        if( ain > Threshold){                          // If the signal is above "550", then "turn-on" Arduino's on-Board LED.
+        //digitalWrite(LED13,HIGH);
+        printf("high\n");
+        } 
+        else {
+        //digitalWrite(LED13,LOW);                //  Else, the sigal must be below "550", so "turn-off" this LED.
+        printf("low\n");
+        }
+
+
+    Thread::wait(50); //1000 for 1 sec
    }
 
 
-	sleep(10); //1000 for 1 sec
-
-
-
+*/
 
 
 
@@ -349,7 +352,7 @@ int main()
      thread. Let it serve as your background MQTT thread. */
     while(1) {
         Thread::wait(1000);
-        printf("main: yielding...\n", client.isConnected());
+        printf("main: yielding...\n");
 
         if(!client.isConnected())
             mbed_reset(); //connection lost! software reset

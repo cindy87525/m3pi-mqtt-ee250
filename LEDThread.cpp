@@ -56,12 +56,14 @@ static DigitalOut led2(LED2);
 const char *topic = "m3pi-mqtt-example";
 
 void LEDThread(void *args) 
-{
+{   
+    printf("In LED Thread");
     MQTT::Client<MQTTNetwork, Countdown> *client = (MQTT::Client<MQTTNetwork, Countdown> *)args;
     MailMsg *msg;
     MQTT::Message message;
     osEvent evt;
     char pub_buf[16];
+
 
 
     while(1) {

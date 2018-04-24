@@ -51,7 +51,7 @@ import platform
 defaulthostname = platform.node()
 
 # default serial port
-defaultport    = "/dev/ttyUSB0"
+defaultport    = "/dev/ttyACM0"
 
 # default baudrate for serial connection
 defaultbaud     = 115200

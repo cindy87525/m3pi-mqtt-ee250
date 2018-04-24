@@ -23,6 +23,9 @@ enum {
     LED_PUBLISH_BLINK_FAST,
     LED_ON_ONE_SEC,
     LED_BLINK_FAST
+    //ACC
+    //DEC
+    //CONSNT
 };
 
 /**
