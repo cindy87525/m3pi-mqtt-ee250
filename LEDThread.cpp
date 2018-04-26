@@ -49,6 +49,11 @@
 
 #include "MQTTClient.h"
 
+
+
+
+
+
 Mail<MailMsg, LEDTHREAD_MAILBOX_SIZE> LEDMailbox;
 
 static DigitalOut led2(LED2);
@@ -63,8 +68,27 @@ void LEDThread(void *args)
     osEvent evt;
     char pub_buf[16];
 
+    int ten = 0;
+    int one = 0;
+    char t_char = '0';
+    char o_char = '0';
+    int heartbeat = 0;
+    AnalogIn ain(p20);
+
+
+
 
     while(1) {
+
+        heartbeat = static_cast<int>(ain.read()*100);
+
+
+        ten = heartbeat / 10;
+        one = (heartbeat) - ten*10;
+        t_char = '0' + ten;
+        o_char = '0' + one;
+
+
 
         evt = LEDMailbox.get();
 
@@ -76,8 +100,8 @@ void LEDThread(void *args)
                 case LED_THR_PUBLISH_MSG:
                     printf("LEDThread: received command to publish to topic"
                            "m3pi-mqtt-example/led-thread\n");
-                    pub_buf[0] = 'h';
-                    pub_buf[1] = 'i';
+                    pub_buf[0] = t_char;
+                    pub_buf[1] = o_char;
                     message.qos = MQTT::QOS0;
                     message.retained = false;
                     message.dup = false;
