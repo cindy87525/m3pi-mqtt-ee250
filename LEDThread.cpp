@@ -121,5 +121,3 @@ Mail<MailMsg, LEDTHREAD_MAILBOX_SIZE> *getLEDThreadMailbox()
 {
     return &LEDMailbox;
 }
-
-

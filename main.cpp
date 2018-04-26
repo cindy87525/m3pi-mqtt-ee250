@@ -55,6 +55,14 @@
 #include "MailMsg.h"
 #include "LEDThread.h"
 #include "PrintThread.h"
+#include <time.h>
+#include <string>
+#include <math.h>
+using namespace std;
+//#include "HeartThread.h"
+
+
+
 
 extern "C" void mbed_reset();
 
@@ -100,6 +108,10 @@ static char *topic = "m3pi-mqtt-ee250";
  *
  * @return     { void }
  */
+
+int Threshold = 550; // Determine which Signal to "count as a beat", and which to ingore.
+AnalogIn ain(p20);
+
 void movement(char command, char speed, int delta_t)
 {
     if (command == 's')
@@ -172,6 +184,28 @@ void messageArrived(MQTT::MessageData& md)
             msg->length = message.payloadlen;
             getLEDThreadMailbox()->put(msg);
             break;
+
+
+/*
+
+        case FWD_TO_HEART_THR:
+        	printf("heart thread fwd\n");
+            msg = getHeartThreadMailbox()->alloc();
+            if (!msg) {
+                printf("heart thread mailbox full!\n");
+                break;
+            }
+            memcpy(msg->content, message.payload, message.payloadlen);
+            msg->length = message.payloadlen;
+            getHeartThreadMailbox()->put(msg);
+            break;
+        	    
+*/
+
+
+
+
+
         default:
             /* do nothing */
             printf("Unknown MQTT message\n");
@@ -181,27 +215,57 @@ void messageArrived(MQTT::MessageData& md)
 
 int main()
 {
-    /* Uncomment this to see how the m3pi moves. This sequence of functions
+
+
+/*
+
+ while (1)
+ {
+	
+	printf("ratebeat: %f\n", ain.read()*100); 
+ 	if( ain > Threshold)
+ 	{ 
+ 		// If the signal is above "550", then "turn-on" Arduino's on-Board LED.
+ 		//digitalWrite(LED13,HIGH);
+ 		printf("high\n");
+ 	} 
+ 	else 
+ 	{
+ 		//digitalWrite(LED13,LOW); // Else, the sigal must be below "550", so "turn-off" this LED.
+ 		printf("low\n");
+ 	}
+ 	Thread::wait(250); //1000 for 1 sec
+ }
+ 
+*/
+
+
+
+
+
+
+
+     /*Uncomment this to see how the m3pi moves. This sequence of functions
        represent w-a-s-d like controlling. Each button press moves the robot
        at a speed of 25 (speed can be between -127 to 127) for 100 ms. Use
        functions like this in your program to move your m3pi when you get 
        MQTT messages! */
-    // movement('w', 25, 100);
-    // movement('w', 25, 100);
-    // movement('w', 25, 100);
-    // movement('w', 25, 100);
-    // movement('a', 25, 100);
-    // movement('a', 25, 100);
-    // movement('a', 25, 100);
-    // movement('a', 25, 100);
-    // movement('d', 25, 100);
-    // movement('d', 25, 100);
-    // movement('d', 25, 100);
-    // movement('d', 25, 100);
-    // movement('s', 25, 100);
-    // movement('s', 25, 100);
-    // movement('s', 25, 100);
-    // movement('s', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
+     movement('w', 25, 100);
 
     wait(1); //delay startup 
     printf("Resetting ESP8266 Hardware...\n");
@@ -258,10 +322,12 @@ int main()
        PrintThread files to understand how these threads work.*/
     Thread ledThr;
     Thread printThr;
-
+    //Thread heartThr;
     /* Here, we pass in a pointer to the MQTT client so the LED thread can 
        client.publish() messages */
     ledThr.start(callback(LEDThread, (void *)&client));
+
+    //heartThr.start(callback(HeartThread, (void *)&client));
 
     /* Here, we do not pass the pointer in. This means the printing thread 
        won't be able to publish any MQTT messages. Modify this accordingly if
