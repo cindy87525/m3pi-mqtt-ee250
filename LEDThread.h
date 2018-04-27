@@ -88,6 +88,10 @@
  */
 void LEDThread(void *args);
 
+
+extern int cindyeats; //declaration of the flag
+
+
 /**
  * @brief      Returns a pointer to the led thread's mailbox
  * @return     Pointer to LED thread's mailbox

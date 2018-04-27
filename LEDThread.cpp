@@ -60,7 +60,14 @@ static DigitalOut led2(LED2);
 
 static const char *topic = "m3pi-mqtt-ee250/led-thread";
 
-extern int flag_cindy; 
+int cindyeats = 0; //definition of the flag
+
+
+
+
+
+
+
 
 
 void LEDThread(void *args) 
@@ -78,8 +85,7 @@ void LEDThread(void *args)
     int heartbeat = 0;
     AnalogIn ain(p20);
 
-
-
+    
 
     while(1) {
 

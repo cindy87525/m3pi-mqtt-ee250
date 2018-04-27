@@ -112,6 +112,9 @@ static char *topic = "m3pi-mqtt-ee250";
 int Threshold = 550; // Determine which Signal to "count as a beat", and which to ingore.
 AnalogIn ain(p20);
 
+
+
+
 void movement(char command, char speed, int delta_t)
 {
     if (command == 's')
@@ -213,10 +216,13 @@ void messageArrived(MQTT::MessageData& md)
     }
 }
 
+
+
+
 int main()
 {
 
-
+    int chubby = cindyeats;
 /*
 
  while (1)
@@ -342,7 +348,7 @@ int main()
     while(1) {
         Thread::wait(1000);
         printf("main: yielding...\n", client.isConnected());
-
+        printf("%d", chubby);
         if(!client.isConnected())
             mbed_reset(); //connection lost! software reset
 
