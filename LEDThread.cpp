@@ -60,6 +60,9 @@ static DigitalOut led2(LED2);
 
 static const char *topic = "m3pi-mqtt-ee250/led-thread";
 
+extern int flag_cindy; 
+
+
 void LEDThread(void *args) 
 {
     MQTT::Client<MQTTNetwork, Countdown> *client = (MQTT::Client<MQTTNetwork, Countdown> *)args;
