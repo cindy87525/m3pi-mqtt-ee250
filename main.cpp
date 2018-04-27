@@ -256,7 +256,7 @@ int main()
        at a speed of 25 (speed can be between -127 to 127) for 100 ms. Use
        functions like this in your program to move your m3pi when you get 
        MQTT messages! */
-     movement('w', 25, 100);
+     movement('w', chubby, 100);
      movement('w', 25, 100);
      movement('w', 25, 100);
      movement('w', 25, 100);
@@ -348,7 +348,6 @@ int main()
     while(1) {
         Thread::wait(1000);
         printf("main: yielding...\n", client.isConnected());
-        printf("%d", chubby);
         if(!client.isConnected())
             mbed_reset(); //connection lost! software reset
 
