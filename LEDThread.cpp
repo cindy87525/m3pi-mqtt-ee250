@@ -122,21 +122,12 @@ void LEDThread(void *args)
                     mqttMtx.unlock();
                     break;
                 case LED_ON_ONE_SEC:
-                    printf("LEDThread: received message to turn LED2 on for"
-                           "one second...\n");
-                    led2 = 1;
-                    wait(1);
-                    led2 = 0;
+                    printf("Increase speed\n");
+                    cindyeats = 1;
                     break;
                 case LED_BLINK_FAST:
-                    printf("LEDThread: received message to blink LED2 fast for"
-                           "one second...\n");
-                    for(int i = 0; i < 10; i++)
-                    {
-                        led2 = !led2;
-                        wait(0.1);
-                    }
-                    led2 = 0;
+                    printf("Decrease speed\n");
+                    cindyeats = -1;
                     break;
                 default:
                     printf("LEDThread: invalid message\n");

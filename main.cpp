@@ -222,12 +222,12 @@ void messageArrived(MQTT::MessageData& md)
 int main()
 {
 
-    int chubby = cindyeats;
+    int chubby = cindyeats +10;
+    int i = 0;
 /*
-
  while (1)
  {
-	
+	printf("%d   ", i++);
 	printf("ratebeat: %f\n", ain.read()*100); 
  	if( ain > Threshold)
  	{ 
@@ -242,8 +242,8 @@ int main()
  	}
  	Thread::wait(250); //1000 for 1 sec
  }
- 
-*/
+ */
+
 
 
 
