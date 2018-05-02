@@ -14,7 +14,7 @@ def serial_ports(unique_id):
 logging.basicConfig(level=logging.INFO)
 
 #clean compile for LPC1768 board using GCC
-os.system("mbed compile -c");
+os.system("mbed compile");
 
 board = MbedBoard.chooseBoard()
 

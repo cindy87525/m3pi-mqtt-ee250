@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
             
     
-    cmd = r'echo -ne "\x01\x00" | mosquitto_pub -h eclipse.usc.edu -p 11000 -t "m3pi-mqtt-ee250" -s'
+    #cmd = r'echo -ne "\x01\x00" | mosquitto_pub -h eclipse.usc.edu -p 11000 -t "m3pi-mqtt-ee250" -s'
 
     while True:
             # This example uses the blue colored sensor. 

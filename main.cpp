@@ -90,7 +90,8 @@ DigitalOut wifiHwResetPin(WIFI_HW_RESET_PIN);
  */
 Mutex mqttMtx;
 
-static char *topic = "m3pi-mqtt-ee250/led-thread";
+static char *topic = "anrg-pi14";
+
 
 /**
  * @brief      controls movement of the 3pi
@@ -299,6 +300,8 @@ int main()
        that arrive */
     if ((retval = client.subscribe(topic, MQTT::QOS0, messageArrived)) != 0)
         printf("MQTT subscribe returned %d\n", retval);
+
+
 
     /* This is a good point to launch your threads. If you want to create 
        another thread, you can look at the structure of the two threads we 
