@@ -43,6 +43,8 @@
  * @author     Bhaskar Krishnachari <bkrishna@usc.edu>
  */
 
+#include "mbed.h"
+#include "m3pi.h"
 #include "LEDThread.h"
 #include "MQTTmbed.h"
 #include "MQTTNetwork.h"
@@ -52,7 +54,7 @@
 
 
 
-
+m3pi m3pi(p23, p9, p10);
 
 Mail<MailMsg, LEDTHREAD_MAILBOX_SIZE> LEDMailbox;
 
@@ -64,8 +66,37 @@ int cindyeats = 0; //definition of the flag
 
 
 
+/*
 
+void movement(char command, char speed, int delta_t)
+{
+    if (command == 's')
+    {
+        m3pi.forward(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }    
+    else if (command == 'a')
+    {
+        m3pi.left(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }   
+    else if (command == 'w')
+    {
+        m3pi.backward(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }
+    else if (command == 'd')
+    {
+        m3pi.right(speed);
+        Thread::wait(delta_t);
+        m3pi.stop();
+    }
+}
 
+*/
 
 
 
@@ -83,9 +114,105 @@ void LEDThread(void *args)
     char t_char = '0';
     char o_char = '0';
     int heartbeat = 0;
+    int speed = 10;
     AnalogIn ain(p20);
 
-    
+    printf("entered LEDThread\n");
+/*
+        int buf_count = 0;
+    float b_tot = 0;
+    float buffer1[10]; //100ms *10 = 1 sec
+    float bpm_buf[2]; //average buffer to get rid of the noise
+    int index1 = 0;
+    int index2 = 5;
+    float period = 0; //peak to peak period
+
+
+
+    while (1)
+    {
+
+        //printf("%d   ", i++);
+        for (int j = 0; j < 10; j++) //put 10 raw analog input values into a buffer array
+        {
+            buffer1[j] = ain.read()*100;
+            //printf("ratebeat: %f\n", buffer1[j]);
+            Thread::wait(100); //1000 for 1 sec
+        }
+
+
+        //determine the period of max -> min -> max in buffer1 OR min -> max -> min
+        if ((buffer1[4] - buffer1[0]) < 0) //likely to be max -> min -> max
+        {
+            //analog value decreases and increases in this case
+            //toggle the point where it stops increasing, get the index of max1
+            for (int i = 0; i < 5; i++)
+            {
+                if (buffer1[index1] < buffer1[i])
+                {
+                    index1 = i;
+                }
+            }
+
+            //get the index of max2
+            for (int i = 5; i < 10; i++)
+            {
+                if (buffer1[index2] < buffer1[i])
+                {
+                    index2 = i;
+                }
+            }
+
+            //each index represents 0.1 sec
+            period = (index2 - index1)*0.1; //unit = sec
+            bpm_buf[buf_count] = 60 / period;
+            buf_count = buf_count + 1;
+            printf("    bpm %d= %f \n",buf_count, bpm_buf[buf_count]);
+        }
+        else if ((buffer1[4] - buffer1[0]) > 0) //likely to be min -> max -> min
+        {
+            //analog value increases and decreases in this case
+            //toggle the point where it stops decreasing, get the index of min1
+            for (int i = 0; i < 5; i++)
+            {
+                if (buffer1[index1] > buffer1[i] && buffer1[i] > 0)
+                {
+                    index1 = i;
+                }
+            }
+
+
+            //get the index of min2
+            for (int i = 5; i < 10; i++)
+            {
+                if (buffer1[index2] > buffer1[i] && buffer1[i] > 0)
+                {
+                    index2 = i;
+                }
+            }
+
+            //each index represents 0.1 sec
+            period = (index2 - index1)*0.1; //unit = sec
+            bpm_buf[buf_count] = 60 / period;
+            buf_count = buf_count + 1;
+            printf("    bpm %d= %f \n", buf_count, bpm_buf[buf_count]);
+        }
+        if (buf_count == 2)
+        {
+            b_tot = bpm_buf[0] + bpm_buf[1];
+            printf("BPM = %f\n", b_tot*0.5);
+            buf_count = 0;
+        }
+
+    }
+
+*/
+
+
+
+
+
+
 
     while(1) {
 
@@ -101,11 +228,17 @@ void LEDThread(void *args)
 
         evt = LEDMailbox.get();
 
-        if(evt.status == osEventMail) {
+
+
+        printf("speed now = %d\n", speed);
+
+        if(evt.status == osEventMail) 
+        {
             msg = (MailMsg *)evt.value.p;
 
             /* the second byte in the message denotes the action type */
-            switch (msg->content[1]) {
+            switch (msg->content[1]) 
+            {
                 case LED_THR_PUBLISH_MSG:
                     printf("LEDThread: received command to publish to topic"
                            "m3pi-mqtt-example/led-thread\n");
@@ -121,13 +254,15 @@ void LEDThread(void *args)
                     client->publish(topic, message);
                     mqttMtx.unlock();
                     break;
-                case LED_ON_ONE_SEC:
-                    printf("Increase speed\n");
-                    cindyeats = 1;
+                case 51:
+                    printf("Speeding up... \n");
+                    speed = speed + 3;
+                    printf("speed is updated to %d \n",speed);
                     break;
-                case LED_BLINK_FAST:
-                    printf("Decrease speed\n");
-                    cindyeats = -1;
+                case 50:
+                    printf("Slowing down\n");
+                    speed = speed - 3;
+                    printf("speed is updated to %d \n",speed);
                     break;
                 default:
                     printf("LEDThread: invalid message\n");
@@ -136,6 +271,12 @@ void LEDThread(void *args)
 
             LEDMailbox.free(msg);
         }
+        
+        m3pi.forward(speed);
+
+
+
+
     } /* while */
 
     /* this should never be reached */

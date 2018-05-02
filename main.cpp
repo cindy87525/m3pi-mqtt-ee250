@@ -83,14 +83,14 @@ DigitalOut wifiHwResetPin(WIFI_HW_RESET_PIN);
  *  If you send the right sequence of UART characters to the atmega328p, it will
  *  move the robot for you. We provide a movement() function below for you to use
  */
-m3pi m3pi(p23, p9, p10);
+//m3pi m3pi(p23, p9, p10);
 
 /* MQTTClient and TCPSocket (underneath MQTTNetwork) may not be thread safe. 
  * Lock this global mutex before any calls to publish(). 
  */
 Mutex mqttMtx;
 
-static char *topic = "m3pi-mqtt-ee250";
+static char *topic = "m3pi-mqtt-ee250/led-thread";
 
 /**
  * @brief      controls movement of the 3pi
@@ -114,6 +114,8 @@ AnalogIn ain(p20);
 
 
 
+
+/*
 
 void movement(char command, char speed, int delta_t)
 {
@@ -142,7 +144,7 @@ void movement(char command, char speed, int delta_t)
         m3pi.stop();
     }
 }
-
+*/
 /* Callback for any received MQTT messages */
 void messageArrived(MQTT::MessageData& md)
 {
@@ -187,33 +189,28 @@ void messageArrived(MQTT::MessageData& md)
             msg->length = message.payloadlen;
             getLEDThreadMailbox()->put(msg);
             break;
-
-
-/*
-
-        case FWD_TO_HEART_THR:
-        	printf("heart thread fwd\n");
-            msg = getHeartThreadMailbox()->alloc();
+        case 48:
+            printf("fwding to led thread\n");
+            msg = getLEDThreadMailbox()->alloc();
             if (!msg) {
-                printf("heart thread mailbox full!\n");
+                printf("led thread mailbox full!\n");
                 break;
             }
             memcpy(msg->content, message.payload, message.payloadlen);
             msg->length = message.payloadlen;
-            getHeartThreadMailbox()->put(msg);
+            getLEDThreadMailbox()->put(msg);
             break;
-        	    
-*/
-
-
-
-
 
         default:
             /* do nothing */
             printf("Unknown MQTT message\n");
             break;
     }
+
+
+
+
+
 }
 
 
@@ -222,30 +219,8 @@ void messageArrived(MQTT::MessageData& md)
 int main()
 {
 
-    int chubby = cindyeats +10;
-    int i = 0;
-/*
- while (1)
- {
-	printf("%d   ", i++);
-	printf("ratebeat: %f\n", ain.read()*100); 
- 	if( ain > Threshold)
- 	{ 
- 		// If the signal is above "550", then "turn-on" Arduino's on-Board LED.
- 		//digitalWrite(LED13,HIGH);
- 		printf("high\n");
- 	} 
- 	else 
- 	{
- 		//digitalWrite(LED13,LOW); // Else, the sigal must be below "550", so "turn-off" this LED.
- 		printf("low\n");
- 	}
- 	Thread::wait(250); //1000 for 1 sec
- }
- */
-
-
-
+    int chubby = cindyeats;
+    printf("entered main.cpp \n");
 
 
 
@@ -256,6 +231,7 @@ int main()
        at a speed of 25 (speed can be between -127 to 127) for 100 ms. Use
        functions like this in your program to move your m3pi when you get 
        MQTT messages! */
+/*    
      movement('w', chubby, 100);
      movement('w', 25, 100);
      movement('w', 25, 100);
@@ -272,6 +248,9 @@ int main()
      movement('w', 25, 100);
      movement('w', 25, 100);
      movement('w', 25, 100);
+
+
+*/  
 
     wait(1); //delay startup 
     printf("Resetting ESP8266 Hardware...\n");
