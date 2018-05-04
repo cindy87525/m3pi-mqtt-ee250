@@ -63,7 +63,7 @@ static DigitalOut led2(LED2);
 static const char *topic = "anrg-pi14/led-thread";
 static const char *topic_speed = "anrg-pi14/speed-thread";
 
-int cindyeats = 0; //definition of the flag
+
 
 
 
@@ -78,12 +78,19 @@ void LEDThread(void *args)
     char pub_buf[16];
     char pub_buf_speed[16];
 
-
+    //speed variables
     int ten_speed = 0;
     int one_speed = 0;
     char t_char_speed = '0';
     char o_char_speed = '0';
     int speed = 10;
+
+
+    //convert speed to characters to be published later
+    ten_speed = speed / 10;
+    one_speed = speed - ten_speed*10;
+    t_char_speed = '0' + ten_speed;
+    o_char_speed = '0' + one_speed;
 
     //for heartbeat
     int hundred = 0;
@@ -97,15 +104,10 @@ void LEDThread(void *args)
     AnalogIn ain(p20);
 
     printf("entered LEDThread\n");
+    int cindyeats = 0; //define cindyeats, which is an extern variable, as the processed heartbeat
 
 
-    //for speed
-    ten_speed = speed / 10;
-    one_speed = speed - ten_speed*10;
-    t_char_speed = '0' + ten_speed;
-    o_char_speed = '0' + one_speed;
-
-
+    //for heartbeat signal processing
     float b_tot = 0;
     float buffer1[10]; //100ms *10 = 1 sec
     float bpm_buf[2]; //average buffer to get rid of the noise
@@ -114,7 +116,7 @@ void LEDThread(void *args)
     float period = 0; //peak to peak period
 
 
-    //publish to P2UX
+    //publish initial default speed to P2UX
     pub_buf_speed[0] = t_char_speed;
     pub_buf_speed[1] = o_char_speed;
     message.qos = MQTT::QOS0;
@@ -168,9 +170,7 @@ void LEDThread(void *args)
                             //each index represents 0.1 sec
                             period = (index2 - index1)*0.1; //unit = sec
                             bpm_buf[k] = 60.0 / period;
-                            printf("    bpm %d= %f \n",k, bpm_buf[k]);
-                            printf("\n");
-                            printf("\n");
+                            
                     }
                     else if ((buffer1[4] - buffer1[0]) > 0) //likely to be min -> max -> min
                     {
@@ -201,19 +201,15 @@ void LEDThread(void *args)
                             //each index represents 0.1 sec
                             period = (index2 - index1)*0.1; //unit = sec
                             bpm_buf[k] = 60 / period;
-                            printf("    bpm %d= %f \n", k, bpm_buf[k]);
-                            printf("\n");
-                            printf("\n");
+                            
                     }
             }
 
             b_tot = bpm_buf[0] + bpm_buf[1];
-            printf("BPM = %f\n", b_tot*0.5);
-            printf("\n");
-            printf("\n");
-            printf("\n");
+            
             heartbeat = b_tot/2;
-            //for heartbeat sensor
+
+            //convert heartbeat sensor values to char to be published later
             hundred = heartbeat / 100;
             ten = heartbeat / 10 - hundred*10;
             one = heartbeat - ten*10 - hundred*100;
@@ -222,48 +218,41 @@ void LEDThread(void *args)
             h_char = '0' + hundred;
 
 
-
-
-        //for speed
-        ten_speed = speed / 10;
-        one_speed = speed - ten_speed*10;
-        t_char_speed = '0' + ten_speed;
-        o_char_speed = '0' + one_speed;
-
-
-        printf("about to get mailbox\n");
         evt = LEDMailbox.get();
-
-        printf("speed now = %d\n", speed);
 
         if(evt.status == osEventMail) 
         {
             msg = (MailMsg *)evt.value.p;
 
-            switch (msg->content[1]) 
+           
+
+            if (msg->content[1] == 99) 
             {
-                case LED_THR_PUBLISH_MSG:
-                    printf("LEDThread: received command to publish to topic"
-                           "m3pi-mqtt-example/led-thread\n");
-                    //printf("%d\n", heartbeat);
-                    //printf("%d, %d, %d\n",hundred, ten, one );
-                    pub_buf[0] = h_char;
-                    pub_buf[1] = t_char;
-                    pub_buf[2] = o_char;
-                    message.qos = MQTT::QOS0;
-                    message.retained = false;
-                    message.dup = false;
-                    message.payload = (void*)pub_buf;
-                    message.payloadlen = 3; //MQTTclient.h takes care of adding null char?
-                    /* Lock the global MQTT mutex before publishing */
-                    mqttMtx.lock();
-                    client->publish(topic, message);
-                    mqttMtx.unlock();
-                    break;
-                case 51:
+                printf("LEDThread: received command to publish to topic"
+                       "anrg-pi14/led-thread\n");
+                
+                pub_buf[0] = h_char;
+                pub_buf[1] = t_char;
+                pub_buf[2] = o_char;
+                message.qos = MQTT::QOS0;
+                message.retained = false;
+                message.dup = false;
+                message.payload = (void*)pub_buf;
+                message.payloadlen = 3; //MQTTclient.h takes care of adding null char?
+                /* Lock the global MQTT mutex before publishing */
+                mqttMtx.lock();
+                client->publish(topic, message);
+                mqttMtx.unlock();
+                if (heartbeat < 95){
                     printf("Speeding up... \n");
                     speed = speed + 3;
                     printf("speed is updated to %d \n",speed);
+                    //break up "speed" value into chars for publishing to topic
+                    ten_speed = speed / 10;
+                    one_speed = speed - ten_speed*10;
+                    t_char_speed = '0' + ten_speed;
+                    o_char_speed = '0' + one_speed;
+                    //assign char into publish buffer
                     pub_buf_speed[0] = t_char_speed;
                     pub_buf_speed[1] = o_char_speed;
                     message.qos = MQTT::QOS0;
@@ -275,11 +264,17 @@ void LEDThread(void *args)
                     mqttMtx.lock();
                     client->publish(topic_speed, message);
                     mqttMtx.unlock();
-                    break;
-                case 50:
+                }
+                else if (heartbeat > 110){
                     printf("Slowing down\n");
                     speed = speed - 3;
                     printf("speed is updated to %d \n",speed);
+                    //convert speed values to char for publishing
+                    ten_speed = speed / 10;
+                    one_speed = speed - ten_speed*10;
+                    t_char_speed = '0' + ten_speed;
+                    o_char_speed = '0' + one_speed;
+                    //assign char into publish buffer
                     pub_buf_speed[0] = t_char_speed;
                     pub_buf_speed[1] = o_char_speed;
                     message.qos = MQTT::QOS0;
@@ -291,10 +286,55 @@ void LEDThread(void *args)
                     mqttMtx.lock();
                     client->publish(topic_speed, message);
                     mqttMtx.unlock();
-                    break;
-                default:
-                    printf("LEDThread: invalid message\n");
-                    break;
+                }
+                
+            }
+            else if (msg->content[1] == 100) {
+                printf("Speeding up... \n");
+                speed = speed + 3;
+                printf("speed is updated to %d \n",speed);
+                //convert speed to char for publishing
+                ten_speed = speed / 10;
+                one_speed = speed - ten_speed*10;
+                t_char_speed = '0' + ten_speed;
+                o_char_speed = '0' + one_speed;
+                //assign char into publish buffer
+                pub_buf_speed[0] = t_char_speed;
+                pub_buf_speed[1] = o_char_speed;
+                message.qos = MQTT::QOS0;
+                message.retained = false;
+                message.dup = false;
+                message.payload = (void*)pub_buf_speed;
+                message.payloadlen = 2; //MQTTclient.h takes care of adding null char?
+                /* Lock the global MQTT mutex before publishing */
+                mqttMtx.lock();
+                client->publish(topic_speed, message);
+                mqttMtx.unlock();
+            }
+            else if (msg->content[1] == 101) {
+                printf("Slowing down\n");
+                speed = speed - 3;
+                printf("speed is updated to %d \n",speed);
+                //convert speed to char for publishing
+                ten_speed = speed / 10;
+                one_speed = speed - ten_speed*10;
+                t_char_speed = '0' + ten_speed;
+                o_char_speed = '0' + one_speed;
+                //assign char into publish buffer
+                pub_buf_speed[0] = t_char_speed;
+                pub_buf_speed[1] = o_char_speed;
+                message.qos = MQTT::QOS0;
+                message.retained = false;
+                message.dup = false;
+                message.payload = (void*)pub_buf_speed;
+                message.payloadlen = 2; //MQTTclient.h takes care of adding null char?
+                /* Lock the global MQTT mutex before publishing */
+                mqttMtx.lock();
+                client->publish(topic_speed, message);
+                mqttMtx.unlock();
+            }
+            else {
+                printf("LEDThread: invalid message\n");
             }            
 
             LEDMailbox.free(msg);

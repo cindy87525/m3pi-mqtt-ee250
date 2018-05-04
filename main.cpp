@@ -59,7 +59,6 @@
 #include <string>
 #include <math.h>
 using namespace std;
-//#include "HeartThread.h"
 
 
 
@@ -161,11 +160,11 @@ void messageArrived(MQTT::MessageData& md)
        callback returns */
     switch(fwdTarget)
     {
-        case FWD_TO_PRINT_THR:
-            printf("fwding to print thread\n");
+        /*case 49:
+            printf("fwding to DANIEL thread\n");
 
             /* allocate the memory for a piece of mail */
-            msg = getPrintThreadMailbox()->alloc();
+           /* msg = getPrintThreadMailbox()->alloc();
 
             if (!msg) {
                 printf("print thread mailbox full!\n");
@@ -173,12 +172,12 @@ void messageArrived(MQTT::MessageData& md)
             }
 
             /* copy the message into the newly allocated MailMsg struct */
-            memcpy(msg->content, message.payload, message.payloadlen);
+           /* memcpy(msg->content, message.payload, message.payloadlen);
             msg->length = message.payloadlen;
 
             /* put the piece of mail into the target thread's mailbox */
-            getPrintThreadMailbox()->put(msg);
-            break;
+           /* getPrintThreadMailbox()->put(msg);
+            break; */
         case FWD_TO_LED_THR:
             printf("fwding to led thread\n");
             msg = getLEDThreadMailbox()->alloc();
@@ -190,7 +189,7 @@ void messageArrived(MQTT::MessageData& md)
             msg->length = message.payloadlen;
             getLEDThreadMailbox()->put(msg);
             break;
-        case 48:
+        case 97:
             printf("fwding to led thread\n");
             msg = getLEDThreadMailbox()->alloc();
             if (!msg) {
@@ -201,6 +200,17 @@ void messageArrived(MQTT::MessageData& md)
             msg->length = message.payloadlen;
             getLEDThreadMailbox()->put(msg);
             break;
+        case 98:
+            printf("fwding to DANIEL thread\n");
+            msg = getPrintThreadMailbox()->alloc();
+            if (!msg) {
+                printf("print thread mailbox full!\n");
+                break;
+            }
+            memcpy(msg->content, message.payload, message.payloadlen);
+            msg->length = message.payloadlen;
+            getPrintThreadMailbox()->put(msg);
+            break;  
 
         default:
             /* do nothing */
@@ -220,38 +230,7 @@ void messageArrived(MQTT::MessageData& md)
 int main()
 {
 
-    int chubby = cindyeats;
-    printf("entered main.cpp \n");
-
-
-
-
-
-     /*Uncomment this to see how the m3pi moves. This sequence of functions
-       represent w-a-s-d like controlling. Each button press moves the robot
-       at a speed of 25 (speed can be between -127 to 127) for 100 ms. Use
-       functions like this in your program to move your m3pi when you get 
-       MQTT messages! */
-/*    
-     movement('w', chubby, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-     movement('w', 25, 100);
-
-
-*/  
+    //int cur_bum = cindyeats;
 
     wait(1); //delay startup 
     printf("Resetting ESP8266 Hardware...\n");
@@ -327,9 +306,12 @@ int main()
      have MQTTAsync, but some effort is needed to adapt mbed OS libraries to
      be used by the MQTTAsync library. Please do NOT do anything else in this
      thread. Let it serve as your background MQTT thread. */
+
+
     while(1) {
         Thread::wait(1000);
         printf("main: yielding...\n", client.isConnected());
+
         if(!client.isConnected())
             mbed_reset(); //connection lost! software reset
 

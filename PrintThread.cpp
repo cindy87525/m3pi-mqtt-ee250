@@ -50,6 +50,8 @@
 
 Mail<MailMsg, PRINTTHREAD_MAILBOX_SIZE> PrintThreadMailbox;
 
+static const char *topic = "anrg-pi14/led-thread";
+
 /* When you read any .c or .cpp files, you often want to open their 
    corresponding header file and read them simultaneously. */
 void printThread() 
@@ -73,16 +75,10 @@ void printThread()
             /* the second byte in the the content of the message tells us what
                action to "dispatch." The message types are defined in 
                MQTTNetwork.h */
-            switch (msg->content[1]) {
-                case PRINT_MSG_TYPE_0:
-                    printf("printThread: this is a print of message type 0!\n");
-                    break;
-                case PRINT_MSG_TYPE_1:
-                    printf("printThread: this is a print of message type 1!\n");
-                    break;
-                default:
-                    printf("printThread: invalid message\n");
-                    break;
+
+            while (msg->content[1] == 99) {
+              printf("printThread: MESSAGE PRINTED SUCCESS!\n");
+              Thread::wait(200);
             }
 
             /* You must always free the message after you're done. Not doing so
