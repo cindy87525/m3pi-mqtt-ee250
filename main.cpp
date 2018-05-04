@@ -54,13 +54,10 @@
 #include "MQTTClient.h"
 #include "MailMsg.h"
 #include "LEDThread.h"
-#include "PrintThread.h"
 #include <time.h>
 #include <string>
 #include <math.h>
 using namespace std;
-
-
 
 
 extern "C" void mbed_reset();
@@ -230,7 +227,6 @@ void messageArrived(MQTT::MessageData& md)
 int main()
 {
 
-    //int cur_bum = cindyeats;
 
     wait(1); //delay startup 
     printf("Resetting ESP8266 Hardware...\n");

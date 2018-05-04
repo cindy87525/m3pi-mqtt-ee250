@@ -48,10 +48,7 @@
 #include "LEDThread.h"
 #include "MQTTmbed.h"
 #include "MQTTNetwork.h"
-
 #include "MQTTClient.h"
-
-
 
 
 m3pi m3pi(p23, p9, p10);
@@ -62,10 +59,6 @@ static DigitalOut led2(LED2);
 
 static const char *topic = "anrg-pi14/led-thread";
 static const char *topic_speed = "anrg-pi14/speed-thread";
-
-
-
-
 
 
 
@@ -104,7 +97,6 @@ void LEDThread(void *args)
     AnalogIn ain(p20);
 
     printf("entered LEDThread\n");
-    int cindyeats = 0; //define cindyeats, which is an extern variable, as the processed heartbeat
 
 
     //for heartbeat signal processing
@@ -135,8 +127,8 @@ void LEDThread(void *args)
     while(1) {
 
         printf("entered the while loop\n");
-            for(int k = 0; k < 2; k++)
-            {
+        for(int k = 0; k < 2; k++)
+        {
                     for (int j = 0; j < 10; j++) //put 10 raw analog input values into a buffer array
                     {
                             buffer1[j] = static_cast<int>(ain.read()*100);
@@ -174,10 +166,6 @@ void LEDThread(void *args)
                     }
                     else if ((buffer1[4] - buffer1[0]) > 0) //likely to be min -> max -> min
                     {
-
-
-
-
                             //analog value increases and decreases in this case
                             //toggle the point where it stops decreasing, get the index of min1
                             for (int i = 0; i < 5; i++)
@@ -203,28 +191,24 @@ void LEDThread(void *args)
                             bpm_buf[k] = 60 / period;
                             
                     }
-            }
+        }
 
-            b_tot = bpm_buf[0] + bpm_buf[1];
-            
-            heartbeat = b_tot/2;
+        b_tot = bpm_buf[0] + bpm_buf[1];
+        heartbeat = b_tot/2;
 
-            //convert heartbeat sensor values to char to be published later
-            hundred = heartbeat / 100;
-            ten = heartbeat / 10 - hundred*10;
-            one = heartbeat - ten*10 - hundred*100;
-            t_char = '0' + ten;
-            o_char = '0' + one;
-            h_char = '0' + hundred;
-
+        //convert heartbeat sensor values to char to be published later
+        hundred = heartbeat / 100;
+        ten = heartbeat / 10 - hundred*10;
+        one = heartbeat - ten*10 - hundred*100;
+        t_char = '0' + ten;
+        o_char = '0' + one;
+        h_char = '0' + hundred;
 
         evt = LEDMailbox.get();
 
         if(evt.status == osEventMail) 
         {
             msg = (MailMsg *)evt.value.p;
-
-           
 
             if (msg->content[1] == 99) 
             {
@@ -339,11 +323,7 @@ void LEDThread(void *args)
 
             LEDMailbox.free(msg);
         }
-        
         m3pi.forward(speed);
-
-
-
 
     } /* while */
 
